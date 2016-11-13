@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tweet Recommender</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+    <style type="text/css">
+      #main {
+        padding-top: 60px;
+      }
+      .title {
+        width: 25%;
+      }
+      .date {
+        width: 15%;
+      }
+      .tweet {
+        width: 55%;
+      }
+      .enqueue {
+        width: 5%;
+      }
+      tr.selected td {
+        background: #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Tweet Recs</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse pull-right">
+          <ul class="nav navbar-nav">
+            <% users.forEach(function(_user) { %>
+              <li class="<%= (user && _user.id == user.id) ? 'active' : '' %>"><a href="/<%= _user.id %>"><%= _user.name %></a></li>
+            <% }); %>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <% if (feed) { %>
+      <div class="container-fluid" id="main">
+        <form method="POST">
+          <table class="table" id="feed">
+            <thead>
+              <tr>
+                <th class="title">Title</th>
+                <th class="date">Date</th>
+                <th class="tweet">Tweet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% feed.forEach(function(item,i) { %>
+                <tr>
+                  <td class="title">
+                    <a href="<%= item.url %>" target="blank"><%= item.title %></a>
+                    <input type="hidden" name="url[]" value="<%= item.url %>" />
+                    <input type="hidden" name="enqueue[]" data-set-value="<%= i %>" />
+                  </td>
+                  <td class="date">
+                    <%= item.date %>
+                  </td>
+                  <td class="tweet">
+                    <input type="text" class="form-control" name="tweet[]" value="<%= item.tweet %>" />
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+      </div>
+    <% } %>
+    <script>
+      var rowCells = document.querySelectorAll('#feed tr td')
+      rowCells.forEach(function(rowCell) {
+        rowCell.addEventListener('click',function() {
+          var hiddenEq = rowCell.parentNode.querySelector('input[name="enqueue[]"]');
+          if (hiddenEq.value == hiddenEq.getAttribute('data-set-value')) {
+            hiddenEq.value = null;
+            rowCell.parentNode.classList.remove('selected');
+          } else {
+            hiddenEq.value = hiddenEq.getAttribute('data-set-value');
+            rowCell.parentNode.classList.add('selected');
+          }
+        });
+      })
+    </script>
+  </body>
+</html>
