@@ -11,16 +11,16 @@
         padding-top: 60px;
       }
       .title {
-        width: 25%;
+        width: 20%;
       }
-      .date {
-        width: 15%;
+      .date,.hashtag {
+        width: 40%;
       }
       .tweet {
-        width: 55%;
+        width: 40%;
       }
-      .enqueue {
-        width: 5%;
+      td {
+        cursor: pointer;
       }
       tr.selected td {
         background: #ddd;
@@ -28,28 +28,31 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a class="navbar-brand" href="/">Tweet Recs</a>
+    <form method="POST">
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="/">Tweet Recs</a>
+          </div>
+          <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+              <% users.forEach(function(_user) { %>
+                <li class="<%= (user && _user.id == user.id) ? 'active' : '' %>"><a href="/<%= _user.id %>"><%= _user.name %></a></li>
+              <% }); %>
+            </ul>
+            <div class="navbar-form navbar-right">
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </div>
         </div>
-        <div id="navbar" class="collapse navbar-collapse pull-right">
-          <ul class="nav navbar-nav">
-            <% users.forEach(function(_user) { %>
-              <li class="<%= (user && _user.id == user.id) ? 'active' : '' %>"><a href="/<%= _user.id %>"><%= _user.name %></a></li>
-            <% }); %>
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <% if (feed) { %>
-      <div class="container-fluid" id="main">
-        <form method="POST">
-          <table class="table" id="feed">
+      </nav>
+      <% if (feed) { %>
+        <div class="container-fluid" id="main">
+          <table class="table table-hover" id="feed">
             <thead>
               <tr>
                 <th class="title">Title</th>
-                <th class="date">Date</th>
+                <th class="hashtags">Hashtags</th>
                 <th class="tweet">Tweet</th>
               </tr>
             </thead>
@@ -62,22 +65,20 @@
                     <input type="hidden" name="enqueue[]" data-set-value="<%= i %>" />
                   </td>
                   <td class="date">
-                    <%= item.date %>
+                    <%= item.hashtags.join(' ') %>
                   </td>
                   <td class="tweet">
-                    <input type="text" class="form-control" name="tweet[]" value="<%= item.tweet %>" />
+                    <textarea type="text" class="form-control" name="tweet[]"><%= item.tweet %></textarea>
                   </td>
                 </tr>
               <% }); %>
             </tbody>
           </table>
-          <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-      </div>
-    <% } %>
+        </div>
+      <% } %>
+    </form>
     <script>
-      var rowCells = document.querySelectorAll('#feed tr td')
-      rowCells.forEach(function(rowCell) {
+      document.querySelectorAll('#feed tr td').forEach(function(rowCell) {
         rowCell.addEventListener('click',function() {
           var hiddenEq = rowCell.parentNode.querySelector('input[name="enqueue[]"]');
           if (hiddenEq.value == hiddenEq.getAttribute('data-set-value')) {
@@ -88,7 +89,10 @@
             rowCell.parentNode.classList.add('selected');
           }
         });
-      })
+      });
+      document.querySelectorAll('textarea').forEach(function(textarea) {
+        textarea.style.height = (textarea.scrollHeight+10)+'px';
+      });
     </script>
   </body>
 </html>
