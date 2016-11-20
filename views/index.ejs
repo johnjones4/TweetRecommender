@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="tweets">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -27,72 +27,89 @@
       }
     </style>
   </head>
-  <body>
-    <form method="POST">
-      <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <a class="navbar-brand" href="/">Tweet Recs</a>
-          </div>
-          <div id="navbar" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-              <% users.forEach(function(_user) { %>
-                <li class="<%= (user && _user.id == user.id) ? 'active' : '' %>"><a href="/<%= _user.id %>"><%= _user.name %></a></li>
-              <% }); %>
-            </ul>
-            <div class="navbar-form navbar-right">
-              <button type="submit" class="btn btn-primary">Save</button>
-            </div>
+  <body ng-controller="TweetsController as ctl">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Tweet Recs</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li ng-repeat="handle in handles" ng-class="getLinkClass(handle)">
+              <a href="#" ng-click="chooseHandle(handle)">{{ handle.name }}</a>
+            </li>
+          </ul>
+          <div class="navbar-form navbar-right">
+            <button type="submit" class="btn btn-primary" ng-click="activeHandleUpdated()">Save</button>
           </div>
         </div>
-      </nav>
-      <% if (feed) { %>
-        <div class="container-fluid" id="main">
-          <table class="table table-hover" id="feed">
-            <thead>
-              <tr>
-                <th class="title">Title</th>
-                <th class="hashtags">Hashtags</th>
-                <th class="tweet">Tweet</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% feed.forEach(function(item,i) { %>
-                <tr>
-                  <td class="title">
-                    <a href="<%= item.url %>" target="blank"><%= item.title %></a>
-                    <input type="hidden" name="url[]" value="<%= item.url %>" />
-                    <input type="hidden" name="enqueue[]" data-set-value="<%= i %>" />
-                  </td>
-                  <td class="date">
-                    <%= item.hashtags.join(' ') %>
-                  </td>
-                  <td class="tweet">
-                    <textarea type="text" class="form-control" name="tweet[]"><%= item.tweet %></textarea>
-                  </td>
-                </tr>
-              <% }); %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
-    </form>
+      </div>
+    </nav>
+    <div class="container-fluid" id="main" ng-show="isActiveHandle()">
+      <table class="table table-hover" id="feed">
+        <thead>
+          <tr>
+            <th class="title">Title</th>
+            <th class="hashtags">Hashtags</th>
+            <th class="tweet">Tweet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="item in activeHandle.items">
+            <td class="title">
+              <a href="{{ item.url }}" target="blank">{{ item.title }}</a>
+            </td>
+            <td class="hastags">
+              {{ item.hashtags.join(' ') }}
+            </td>
+            <td class="tweet">
+              <textarea type="text" class="form-control" ng-model="item.tweet" msd-elastic maxlength="140"></textarea>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" ng-model="item.shouldTweet" />
+                  Tweet
+                </label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular-resource.min.js"></script>
+    <script src="http://monospaced.github.io/angular-elastic/elastic.js"></script>
     <script>
-      document.querySelectorAll('#feed tr td').forEach(function(rowCell) {
-        rowCell.addEventListener('click',function() {
-          var hiddenEq = rowCell.parentNode.querySelector('input[name="enqueue[]"]');
-          if (hiddenEq.value == hiddenEq.getAttribute('data-set-value')) {
-            hiddenEq.value = null;
-            rowCell.parentNode.classList.remove('selected');
-          } else {
-            hiddenEq.value = hiddenEq.getAttribute('data-set-value');
-            rowCell.parentNode.classList.add('selected');
+      angular.module('tweets', ['ngResource','monospaced.elastic'])
+        .factory('Handle', function($resource) {
+          var Handle = $resource('/handle/:id', { id: '@slug' }, {
+            update: {
+              method: 'PUT'
+            }
+          });
+          return Handle;
+        })
+        .controller('TweetsController', function($scope,Handle) {
+          $scope.handles = Handle.query();
+          $scope.activeHandle = null;
+
+          $scope.activeHandleUpdated = function() {
+            if ($scope.activeHandle) {
+              $scope.activeHandle.$update();
+            }
+          };
+
+          $scope.getLinkClass = function(handle) {
+            return $scope.activeHandle && handle.slug == $scope.activeHandle.slug;
+          }
+
+          $scope.chooseHandle = function(handle) {
+            $scope.activeHandle = handle
+          }
+
+          $scope.isActiveHandle = function() {
+            return !(!$scope.activeHandle);
           }
         });
-      });
-      document.querySelectorAll('textarea').forEach(function(textarea) {
-        textarea.style.height = (textarea.scrollHeight+10)+'px';
-      });
     </script>
   </body>
 </html>
